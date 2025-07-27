@@ -6,19 +6,22 @@
 #define KEYLISTENER_HPP
 
 #include <poll.h>
-#include <vector>
 #include <string>
+#include <vector>
+
+#include "KeyDecoder.hpp"
 
 namespace keylogger
 {
 class KeyListener
 {
 public:
-    explicit KeyListener();
+    explicit KeyListener(KeyDecoder& decoder);
     void Run();
     bool IsInputDevice(const std::string& device_path);
 private:
     std::vector<pollfd> m_fds;
+    KeyDecoder& m_keyDecoder;
 
 }; // class KeyListener
 } // namespace keylogger
