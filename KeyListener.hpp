@@ -9,20 +9,25 @@
 #include <string>
 #include <vector>
 
-#include "KeyDecoder.hpp"
-
 namespace keylogger
 {
+
+struct KeyEvent
+{
+    int code;
+    int value;
+};
+
 class KeyListener
 {
 public:
-    explicit KeyListener(KeyDecoder& decoder);
-    void Run();
-    bool IsInputDevice(const std::string& device_path);
+    explicit KeyListener();
+    ~KeyListener();
+    KeyEvent Listen();
 private:
+    void FindInputDevices();
+    static bool IsInputDevice(const std::string& device_path);
     std::vector<pollfd> m_fds;
-    KeyDecoder& m_keyDecoder;
-
 }; // class KeyListener
 } // namespace keylogger
 
